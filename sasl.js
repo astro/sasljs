@@ -1,4 +1,4 @@
-var saslc = require('./lib/binding_sasl');
+var saslc = require('./build/Release/lib/binding_sasl');
 var sys = require('sys');
 
 Object.keys(saslc).forEach(function(elt) {
