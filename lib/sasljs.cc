@@ -29,7 +29,7 @@ using namespace node;
   assert( session_obj->m_session != NULL )
 
 namespace sasljs {
-void ServerSession::Initialize ( Handle<Object> target )
+v8::Local<v8::FunctionTemplate> Session::Initialize ( Handle<Object> target )
 {
   v8::HandleScope scope;
 
@@ -100,21 +100,32 @@ void ServerSession::Initialize ( Handle<Object> target )
   NODE_DEFINE_CONSTANT( target, GSASL_VALIDATE_SECURID );
 
   NODE_SET_PROTOTYPE_METHOD( t, "_mechanisms", GetMechanisms );
-  NODE_SET_PROTOTYPE_METHOD( t, "start", Start );
   NODE_SET_PROTOTYPE_METHOD( t, "step", Step );
   NODE_SET_PROTOTYPE_METHOD( t, "property", GetSaslProperty );
   NODE_SET_PROTOTYPE_METHOD( t, "setProperty", SetSaslProperty );
 
-  target->Set( v8::String::NewSymbol( "ServerSession"), t->GetFunction() );
+  return scope.Close(t);
+}
+
+void ServerSession::Initialize ( Handle<Object> target ) {
+  v8::Handle<v8::FunctionTemplate> t = Session::Initialize(target);
+  NODE_SET_PROTOTYPE_METHOD( t, "start", Start );
+  target->Set( v8::String::NewSymbol("ServerSession"), t->GetFunction() );
+}
+
+void ClientSession::Initialize ( Handle<Object> target ) {
+  v8::Handle<v8::FunctionTemplate> t = Session::Initialize(target);
+  NODE_SET_PROTOTYPE_METHOD( t, "start", Start );
+  target->Set( v8::String::NewSymbol("ClientSession"), t->GetFunction() );
 }
 
 /*
  * Call in JS
- * new ServerSession( "service name" );
+ * new Session( "service name" );
  * All other options default to NULL for now
  */
 v8::Handle<v8::Value>
-ServerSession::New (const v8::Arguments& args)
+Session::New (const v8::Arguments& args)
 {
   HandleScope scope;
 
@@ -125,27 +136,27 @@ ServerSession::New (const v8::Arguments& args)
                                   String::New("Argument 1 must be a callback")));
   }
 
-  ServerSession *server = new ServerSession( *realm, cb_persist( args[1] ) );
-  server->Wrap( args.This() );
+  Session *sc = new Session( *realm, cb_persist( args[1] ) );
+  sc->Wrap( args.This() );
   return args.This();
 }
 
-ServerSession::ServerSession( const char *realm, Persistent<Function> *cb )
+Session::Session( const char *realm, Persistent<Function> *cb )
   : ObjectWrap()
   , m_session( NULL )
   , m_callback( cb )
 {
 }
 
-ServerSession::~ServerSession()
+Session::~Session()
 {
   m_callback->Dispose();
 }
 
 Handle<Value>
-ServerSession::GetMechanisms( const v8::Arguments &args )
+Session::GetMechanisms( const v8::Arguments &args )
 {
-  ServerSession *sc = Unwrap<ServerSession>( args.This() );
+  Session *sc = Unwrap<Session>( args.This() );
 
   char *result;
   
@@ -160,9 +171,9 @@ ServerSession::GetMechanisms( const v8::Arguments &args )
 }
 
 int
-ServerSession::Callback( Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop )
+Session::Callback( Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop )
 {
-  ServerSession *sc = static_cast<ServerSession*>(gsasl_session_hook_get( sctx ));
+  Session *sc = static_cast<Session*>(gsasl_session_hook_get( sctx ));
   ENSURE_STARTED( sc );
 
   Local<Value> argv[] = { Integer::New( prop ), Local<Object>::New(sc->handle_) };
@@ -199,11 +210,30 @@ ServerSession::Start( const v8::Arguments &args )
 }
 
 v8::Handle<v8::Value>
-ServerSession::Step( const v8::Arguments &args )
+ClientSession::Start( const v8::Arguments &args )
+{
+  REQ_STR_ARG( 0, mechanismString );
+
+  int res;
+
+  ClientSession *sc = Unwrap<ClientSession>( args.This() );
+  if( sc->m_session != NULL ) {
+    return ThrowException( Exception::Error( String::New( "sasljs: This session is already started!" ) ) );
+  }
+
+  res = gsasl_client_start( ctx, *mechanismString, &sc->m_session );
+  gsasl_session_hook_set( sc->m_session, sc );
+  gsasl_callback_set( ctx, sc->Callback );
+
+  return Integer::New( res );
+}
+
+v8::Handle<v8::Value>
+Session::Step( const v8::Arguments &args )
 {
   REQ_STR_ARG( 0, clientinString );
 
-  ServerSession *sc = Unwrap<ServerSession>( args.This() );
+  Session *sc = Unwrap<Session>( args.This() );
 
   char *reply;
 
@@ -225,9 +255,9 @@ ServerSession::Step( const v8::Arguments &args )
 }
 
 Handle<Value>
-ServerSession::GetSaslProperty( const Arguments &args )
+Session::GetSaslProperty( const Arguments &args )
 {
-  ServerSession *sc = Unwrap<ServerSession>( args.This() );
+  Session *sc = Unwrap<Session>( args.This() );
   ENSURE_STARTED( sc );
 
   if( args.Length() < 1 || !args[0]->IsString() ) {
@@ -250,9 +280,9 @@ ServerSession::GetSaslProperty( const Arguments &args )
 }
 
 Handle<Value>
-ServerSession::SetSaslProperty( const Arguments &args )
+Session::SetSaslProperty( const Arguments &args )
 {
-  ServerSession *sc = Unwrap<ServerSession>( args.This() );
+  Session *sc = Unwrap<Session>( args.This() );
   ENSURE_STARTED( sc );
 
   if( args.Length() < 1 || !args[0]->IsString() ) {
