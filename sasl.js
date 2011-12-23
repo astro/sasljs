@@ -12,4 +12,10 @@ exports.createServerSession = function(realm, callback) {
     // POP empty element
     serv.mechanisms.pop();
     return serv;
-}
+};
+
+exports.createClientSession = function(realm, callback) {
+    var client = new saslc.ClientSession( realm, callback );
+    client.mechanisms = client._mechanisms().split(' ');
+    return client;
+};
