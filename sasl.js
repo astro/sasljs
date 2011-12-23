@@ -6,16 +6,16 @@ Object.keys(saslc).forEach(function(elt) {
         exports[elt] = saslc[elt];
 });
 
-exports.createServerSession = function(realm, callback) {
-    var serv = new saslc.ServerSession( realm, callback );
+exports.createServerSession = function(callback) {
+    var serv = new saslc.ServerSession( callback );
     serv.mechanisms = serv._mechanisms().split(' ');
     // POP empty element
     serv.mechanisms.pop();
     return serv;
 };
 
-exports.createClientSession = function(realm, callback) {
-    var client = new saslc.ClientSession( realm, callback );
+exports.createClientSession = function(callback) {
+    var client = new saslc.ClientSession( callback );
     client.mechanisms = client._mechanisms().split(' ');
     return client;
 };

@@ -33,7 +33,7 @@ class Session : public node::ObjectWrap
 
     static int Callback( Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop );
 
-    Session( const char *realm, v8::Persistent<v8::Function> *cb );
+    Session( v8::Persistent<v8::Function> *cb );
     ~Session();
 
     Gsasl_session *m_session;

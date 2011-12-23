@@ -129,19 +129,17 @@ Session::New (const v8::Arguments& args)
 {
   HandleScope scope;
 
-  REQ_STR_ARG( 0, realm );
-
-  if( args.Length() <= 1 || !args[1]->IsFunction() ) {
+  if( args.Length() < 1 || !args[0]->IsFunction() ) {
     return ThrowException(Exception::TypeError(
-                                  String::New("Argument 1 must be a callback")));
+                                  String::New("Argument 0 must be a callback")));
   }
 
-  Session *sc = new Session( *realm, cb_persist( args[1] ) );
+  Session *sc = new Session( cb_persist( args[0] ) );
   sc->Wrap( args.This() );
   return args.This();
 }
 
-Session::Session( const char *realm, Persistent<Function> *cb )
+Session::Session( Persistent<Function> *cb )
   : ObjectWrap()
   , m_session( NULL )
   , m_callback( cb )
