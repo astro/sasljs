@@ -343,4 +343,5 @@ init (Handle<Object> target)
   sasljs::property_strings["validate_securid"] =           GSASL_VALIDATE_SECURID;
 
   sasljs::ServerSession::Initialize(target);
+  sasljs::ClientSession::Initialize(target);
 }
