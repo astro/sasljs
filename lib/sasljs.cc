@@ -176,7 +176,16 @@ Session::Callback( Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop )
   Session *sc = static_cast<Session*>(gsasl_session_hook_get( sctx ));
   ENSURE_STARTED( sc );
 
-  Local<Value> argv[] = { Integer::New( prop ), Local<Object>::New(sc->handle_) };
+  std::map<Gsasl_property, const char *>::iterator it = property_codes.find( prop );
+
+  Local<Value> propValue;
+  if( it != property_codes.end() ) {
+    propValue = String::NewSymbol(it->second);
+  } else {
+    propValue = Integer::New(prop);
+  }
+    
+  Local<Value> argv[] = { propValue, Local<Object>::New(sc->handle_) };
   Local<Value> ret = (*sc->m_callback)->Call( sc->handle_, 2, argv );
 
   if( !ret->IsNumber() )
@@ -304,6 +313,12 @@ Session::SetSaslProperty( const Arguments &args )
 
   return Null();
 }
+
+static void register_property(const char *name, Gsasl_property prop)
+{
+  property_strings[name] = prop;
+  property_codes[prop] = name;
+}
 }
 
 extern "C" void
@@ -319,28 +334,28 @@ init (Handle<Object> target)
       abort();
   }
 
-  sasljs::property_strings["authid"] =                     GSASL_AUTHID;
-  sasljs::property_strings["authzid"] =                    GSASL_AUTHZID;
-  sasljs::property_strings["password"] =                   GSASL_PASSWORD;
-  sasljs::property_strings["anonymous_token"] =            GSASL_ANONYMOUS_TOKEN;
-  sasljs::property_strings["service"] =                    GSASL_SERVICE;
-  sasljs::property_strings["hostname"] =                   GSASL_HOSTNAME;
-  sasljs::property_strings["gssapi_display_name"] =       GSASL_GSSAPI_DISPLAY_NAME;
-  sasljs::property_strings["passcode"] =                   GSASL_PASSCODE;
-  sasljs::property_strings["suggested_pin"] =              GSASL_SUGGESTED_PIN;
-  sasljs::property_strings["pin"] =                        GSASL_PIN;
-  sasljs::property_strings["realm"] =                      GSASL_REALM;
-  sasljs::property_strings["digest_md5_hashed_password"] = GSASL_DIGEST_MD5_HASHED_PASSWORD;
-  sasljs::property_strings["qops"] =                       GSASL_QOPS;
-  sasljs::property_strings["qop"] =                        GSASL_QOP;
-  sasljs::property_strings["scram_iter"] =                 GSASL_SCRAM_ITER;
-  sasljs::property_strings["scram_salt"] =                 GSASL_SCRAM_SALT;
-  sasljs::property_strings["scram_salted_password"] =      GSASL_SCRAM_SALTED_PASSWORD;
-  sasljs::property_strings["validate_simple"] =            GSASL_VALIDATE_SIMPLE;
-  sasljs::property_strings["validate_external"] =          GSASL_VALIDATE_EXTERNAL;
-  sasljs::property_strings["validate_anonymous"] =         GSASL_VALIDATE_ANONYMOUS;
-  sasljs::property_strings["validate_gssapi"] =            GSASL_VALIDATE_GSSAPI;
-  sasljs::property_strings["validate_securid"] =           GSASL_VALIDATE_SECURID;
+  sasljs::register_property("authid", GSASL_AUTHID);
+  sasljs::register_property("authzid", GSASL_AUTHZID);
+  sasljs::register_property("password", GSASL_PASSWORD);
+  sasljs::register_property("anonymous_token", GSASL_ANONYMOUS_TOKEN);
+  sasljs::register_property("service", GSASL_SERVICE);
+  sasljs::register_property("hostname", GSASL_HOSTNAME);
+  sasljs::register_property("gssapi_display_name", GSASL_GSSAPI_DISPLAY_NAME);
+  sasljs::register_property("passcode", GSASL_PASSCODE);
+  sasljs::register_property("suggested_pin", GSASL_SUGGESTED_PIN);
+  sasljs::register_property("pin", GSASL_PIN);
+  sasljs::register_property("realm", GSASL_REALM);
+  sasljs::register_property("digest_md5_hashed_password", GSASL_DIGEST_MD5_HASHED_PASSWORD);
+  sasljs::register_property("qops", GSASL_QOPS);
+  sasljs::register_property("qop", GSASL_QOP);
+  sasljs::register_property("scram_iter", GSASL_SCRAM_ITER);
+  sasljs::register_property("scram_salt", GSASL_SCRAM_SALT);
+  sasljs::register_property("scram_salted_password", GSASL_SCRAM_SALTED_PASSWORD);
+  sasljs::register_property("validate_simple", GSASL_VALIDATE_SIMPLE);
+  sasljs::register_property("validate_external", GSASL_VALIDATE_EXTERNAL);
+  sasljs::register_property("validate_anonymous", GSASL_VALIDATE_ANONYMOUS);
+  sasljs::register_property("validate_gssapi", GSASL_VALIDATE_GSSAPI);
+  sasljs::register_property("validate_securid", GSASL_VALIDATE_SECURID);
 
   sasljs::ServerSession::Initialize(target);
   sasljs::ClientSession::Initialize(target);

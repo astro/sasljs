@@ -62,6 +62,7 @@ class ClientSession : public Session {
 
 static Gsasl *ctx;
 static std::map<std::string, Gsasl_property> property_strings;
+static std::map<Gsasl_property, const char *> property_codes;
 }
 
 #endif
