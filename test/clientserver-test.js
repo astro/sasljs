@@ -6,10 +6,10 @@ vows.describe("Client-Server Dialogue").addBatch({
     'ANONYMOUS': {
 	"should authenticate": function() {
 	    var s = sasl.createServerSession(function(prop) {
-		return 0;
+		return sasl.GSASL_OK;
 	    });
 	    var c = sasl.createClientSession(function(prop) {
-		return 0;
+		return sasl.GSASL_OK;
 	    });
 	    assert.equal(c.start("ANONYMOUS"), 0);
 	    c.setProperty("anonymous_token", "foobar");
@@ -17,11 +17,11 @@ vows.describe("Client-Server Dialogue").addBatch({
 	    var input = "";
 	    do {
 		var stepResult = c.step(input);
-		assert.equal(stepResult.status, 0);
+		assert.equal(stepResult.status, sasl.GSASL_OK);
 		assert.ok(stepResult.data.length > 0);
 		input = stepResult.data || "";
 		stepResult = s.step(input);
-		assert.equal(stepResult.status, 0);
+		assert.equal(stepResult.status, sasl.GSASL_OK);
 		input = stepResult.data || "";
 	    } while(input !== "");
 	}
@@ -30,11 +30,15 @@ vows.describe("Client-Server Dialogue").addBatch({
 	"should authenticate": function() {
 	    var s = sasl.createServerSession(function(prop) {
 		console.log("s prop", prop);
-		return 0;
+		if (prop === 'validate_simple') {
+		    return (s.property('authid') == "peter" &&
+			    s.property('password') == "secret") ?
+			sasl.GSASL_OK : sasl.GSASL_NO_CALLBACK;
+		}
 	    });
 	    var c = sasl.createClientSession(function(prop) {
 		console.log("c prop", prop);
-		return 0;
+		return sasl.GSASL_OK;
 	    });
 	    console.log("c start", c.start("PLAIN"));
 	    c.setProperty("authid", "peter");
@@ -43,11 +47,11 @@ vows.describe("Client-Server Dialogue").addBatch({
 	    var input = "";
 	    do {
 		var stepResult = c.step(input);
-		assert.equal(stepResult.status, 0);
+		assert.equal(stepResult.status, sasl.GSASL_OK);
 		assert.ok(stepResult.data.length > 0);
 		input = stepResult.data || "";
 		stepResult = s.step(input);
-		assert.equal(stepResult.status, 0);
+		assert.equal(stepResult.status, sasl.GSASL_OK);
 		input = stepResult.data || "";
 	    } while(input !== "");
 	}
@@ -58,11 +62,11 @@ vows.describe("Client-Server Dialogue").addBatch({
 		console.log("s prop", prop);
 		if (prop === 'password')
 		    s.setProperty("password", "secret");
-		return 0;
+		return sasl.GSASL_OK;
 	    });
 	    var c = sasl.createClientSession(function(prop) {
 		console.log("c prop", prop);
-		return 0;
+		return sasl.GSASL_OK;
 	    });
 	    console.log("c start", c.start("DIGEST-MD5"));
 	    c.setProperty("authid", "peter");
@@ -78,8 +82,8 @@ vows.describe("Client-Server Dialogue").addBatch({
 		stepResult = c.step(input);
 		console.log("c step", stepResult);
 		input = stepResult.data || "";
-	    } while(stepResult.status === 1);
-	    assert.equal(stepResult.status, 0);
+	    } while(stepResult.status === sasl.GSASL_NEEDS_MORE);
+	    assert.equal(stepResult.status, sasl.GSASL_OK);
 	}
     }
 }).export(module);
