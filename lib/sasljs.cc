@@ -148,6 +148,8 @@ Session::Session( Persistent<Function> *cb )
 
 Session::~Session()
 {
+  if (m_session)
+    gsasl_finish(m_session);
   m_callback->Dispose();
 }
 
