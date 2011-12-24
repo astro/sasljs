@@ -351,6 +351,7 @@ init (Handle<Object> target)
   sasljs::register_property("scram_iter", GSASL_SCRAM_ITER);
   sasljs::register_property("scram_salt", GSASL_SCRAM_SALT);
   sasljs::register_property("scram_salted_password", GSASL_SCRAM_SALTED_PASSWORD);
+  sasljs::register_property("cb_tls_unique", GSASL_CB_TLS_UNIQUE);
   sasljs::register_property("validate_simple", GSASL_VALIDATE_SIMPLE);
   sasljs::register_property("validate_external", GSASL_VALIDATE_EXTERNAL);
   sasljs::register_property("validate_anonymous", GSASL_VALIDATE_ANONYMOUS);
