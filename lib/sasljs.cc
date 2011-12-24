@@ -174,7 +174,12 @@ int
 Session::Callback( Gsasl *ctx, Gsasl_session *sctx, Gsasl_property prop )
 {
   Session *sc = static_cast<Session*>(gsasl_session_hook_get( sctx ));
-  ENSURE_STARTED( sc );
+  if (!sc)
+    /**
+     * Listing mechanisms creates a session internal to gsasl, not
+     * constructed by us.
+     */
+    return GSASL_OK;
 
   std::map<Gsasl_property, const char *>::iterator it = property_codes.find( prop );
 
